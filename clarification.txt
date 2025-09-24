@@ -2,8 +2,13 @@
 添加 convert_to_json.py，转换txt为input.json
 运行 clr_ctrl.py，得到 train.json，但内部并非仅含一整行文字
 命令行运行 jq -c '[([.data[].text] | join(""))]' train.json > out.json，得到 out.json （65MB）用于训练模型
-由于数据集过大，调整batch_size=40，stride=1024以减小steps，并增加GPU个数（夜间运行，并未影响他人工作），初次训练：
+由于数据集过大，调整 batch_size=40，stride=1024 以减小 steps ，并增加GPU个数（夜间运行，并未影响他人工作），初次训练：
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 && python train.py --device 0,1,2,3,4,5,6,7 --batch_size 40 --stride 1024 --model_config config/model_config_small.json --tokenized_data_path data/tokenized/  --tokenizer_path cache/vocab_small.txt --raw_data_path data/out.json --epochs 20 --log_step 200 --output_dir model/ --num_pieces 100 --raw
+每个epoch大约耗时11min
 第4轮结束后，训练中断，继续训练：
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 && python train.py --device 0,1,2,3,4,5,6,7 --batch_size 40 --stride 1024 --model_config config/model_config_small.json --tokenized_data_path data/tokenized/ --tokenizer_path cache/vocab_small.txt --raw_data_path data/out.json --epochs 16 --log_step 200 --output_dir ./model/model_resume --num_pieces 100 --pretrained_model model/model_epoch4
 训练20轮，结果写入./mnt
+生成的文字效果一般，可能的原因：
+1. 数据集过大，为加速训练，采取减小 steps 的策略， batch_size *= 5 但并未改变学习率 lr，翻倍了 stride 使其等于 n_ctx ，导致窗口几乎无重叠，推测增加训练 epoch 能够弥补；
+2. 数据集内部有杂乱的无关文字，例如“第x章...”，影响训练质量；
+3. 本身设定的 epoch = 20，中间存在中断，重启时并未考虑学习率和优化器的连续衔接，在很小的 epoch 内的影响可能较为显著；
