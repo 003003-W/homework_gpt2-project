@@ -1,0 +1,6 @@
+input.txt filter=lfs diff=lfs merge=lfs -text
+input.json filter=lfs diff=lfs merge=lfs -text
+train.json filter=lfs diff=lfs merge=lfs -text
+out.json filter=lfs diff=lfs merge=lfs -text
+*.bin filter=lfs diff=lfs merge=lfs -text
+data/tokenized/*.txt filter=lfs diff=lfs merge=lfs -text
